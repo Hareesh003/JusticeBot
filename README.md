@@ -1,71 +1,70 @@
-Justice Bot
+# Justice Bot
+
 Justice Bot is a legal expert AI chatbot that helps users retrieve insights from legal documents. It utilizes LangChain, Hugging Face embeddings, and Pinecone for efficient document retrieval and query processing.
 
-Features
-✅ Processes and stores legal documents for quick retrieval.
-✅ Uses Hugging Face embeddings to understand context.
-✅ Stores vectorized data in Pinecone for efficient searching.
-✅ Retrieves relevant legal insights based on user queries.
+## Features
 
-Installation
-Prerequisites
-Ensure you have the following installed:
+- Processes and stores legal documents for quick retrieval.
+- Uses Hugging Face embeddings to understand context.
+- Stores vectorized data in Pinecone.
+- Retrieves relevant legal insights based on user queries.
 
-Python 3.8+
-pip
-virtualenv (optional but recommended)
-Setup
-Clone the repository:
+## Installation
 
-bash
-Copy
-Edit
-git clone https://github.com/yourusername/justice-bot.git  
-cd justice-bot  
-Create a virtual environment (optional but recommended):
+### Prerequisites
 
-bash
-Copy
-Edit
-python -m venv venv  
-source venv/bin/activate  
-Install dependencies:
+Make sure you have the following installed:
 
-nginx
-Copy
-Edit
-pip install -r requirements.txt  
-Set up environment variables:
+- Python 3.8+
+- pip
+- virtualenv (optional but recommended)
 
-Create a .env file in the root directory.
-Add the following:
-ini
-Copy
-Edit
-PINECONE_API_KEY=your_pinecone_api_key  
-HUGGINGFACEHUB_API_TOKEN=your_huggingface_api_token  
-Usage
-Running the Chatbot
+### Setup
+
+1. Clone the repository:
+
+   ```sh
+   git clone https://github.com/yourusername/justice-bot.git
+   cd justice-bot
+   ```
+
+2. Create a virtual environment (optional but recommended):
+
+   ```sh
+   python -m venv venv
+   source venv/bin/activate
+   ```
+
+3. Install dependencies:
+
+   ```sh
+   pip install -r requirements.txt
+   ```
+
+4. Set up environment variables:
+
+   Create a `.env` file in the root directory and add the following:
+
+   ```sh
+   PINECONE_API_KEY=your_pinecone_api_key
+   HUGGINGFACEHUB_API_TOKEN=your_huggingface_api_token
+   ```
+
+## Usage
+
+### Running the Chatbot
+
 To start the chatbot, run:
 
-nginx
-Copy
-Edit
-python app.py  
-Processing Documents
-Place your legal PDF files inside the data/ folder.
-Run the indexing script:
-nginx
-Copy
-Edit
-python store_index.py  
-Contributing
-Contributions are welcome! Feel free to fork the repository and create pull requests.
+```sh
+python app.py
+```
 
-License
-This project is licensed under the MIT License.
+### Processing Documents
 
-Contact
-For any inquiries, feel free to reach out at your_email@example.com
+1. Place your legal PDF files inside the `data/` folder.
+2. Run the indexing script:
 
-This version ensures proper GitHub Markdown formatting while keeping it clean and readable. 🚀 Let me know if you want any changes!
+   ```sh
+   python store_index.py
+   ```
