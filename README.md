@@ -1,4 +1,4 @@
-Justice Bot
+****Justice Bot****
 
 Justice Bot is a legal expert AI chatbot that helps users retrieve insights from legal documents. It utilizes LangChain, Hugging Face embeddings, and Pinecone for efficient document retrieval and query processing.
 
