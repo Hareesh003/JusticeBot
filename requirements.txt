@@ -8,5 +8,6 @@ langchain-pinecone
 langchain-community
 langchain-openai
 langchain-experimental
+langchain-huggingface
 huggingface_hub
 gunicorn=21.2.0
