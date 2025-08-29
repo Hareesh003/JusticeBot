@@ -10,4 +10,4 @@ langchain-openai
 langchain-experimental
 langchain-huggingface
 huggingface_hub
-gunicorn=21.2.0
+gunicorn==21.2.0
