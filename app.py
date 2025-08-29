@@ -1,78 +1,84 @@
 from flask import Flask, render_template, jsonify, request
-from src.helper import download_hugging_face_embedding 
+from src.helper import download_hugging_face_embedding, get_huggingface_llm  
 from langchain_pinecone import PineconeVectorStore
-from langchain_openai import OpenAI
-from langchain_huggingface import HuggingFaceEndpoint
-from langchain_core.prompts import PromptTemplate
-from langchain.chains.llm import LLMChain
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
 from src.prompt import system_prompt
 import os
 
 app = Flask(__name__)
-
+# Load environment variables
 load_dotenv()
 
-PINECONE_API_KEY=os.environ.get('PINECONE_API_KEY')
-HUGGINGFACEHUB_API_TOKEN=os.environ.get('HUGGINGFACEHUB_API_TOKEN')
+PINECONE_API_KEY = os.getenv('PINECONE_API_KEY')
+HUGGINGFACEHUB_API_TOKEN = os.getenv('HUGGINGFACEHUB_API_TOKEN')  # ADDED
+if not PINECONE_API_KEY:
+    raise EnvironmentError("PINECONE_API_KEY environment variable is not set.")
+if not HUGGINGFACEHUB_API_TOKEN:
+    raise EnvironmentError("HUGGINGFACEHUB_API_TOKEN environment variable is not set.")
 
-os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
-os.environ["HUGGINGFACEHUB_API_TOKEN"] = HUGGINGFACEHUB_API_TOKEN
+# Initialize Hugging Face LLM
+llm = get_huggingface_llm()  # INITIALIZE LLM
 
+# Pinecone setup
 embeddings = download_hugging_face_embedding()
-
-
 index_name = "justicebot"
-
-# Embed each chunk and upsert the embeddings into your Pinecone index.
 docsearch = PineconeVectorStore.from_existing_index(
     index_name=index_name,
     embedding=embeddings
 )
+retriever = docsearch.as_retriever(search_type="mmr", search_kwargs={"k": 3, "fetch_k": 10})
 
-retriever = docsearch.as_retriever(search_type="similarity", search_kwargs={"k":5})
+# Create a proper prompt template
+prompt_template = ChatPromptTemplate.from_messages([
+    ("system", system_prompt),
+    ("human", "Question: {input}\nContext: {context}")
+])
 
+def process_query(msg):
+    print(f"🔍 User Input: {msg}")
+    
+    # Retrieve relevant documents
+    docs = retriever.invoke(msg)
+    if not docs:
+        return "No relevant information found."
+    
+    # Combine documents into context
+    context = "\n\n".join([doc.page_content for doc in docs])
+    print(f"📄 Retrieved Context: {context}")
+    
+    # Format the prompt with context and question
+    formatted_prompt = prompt_template.invoke({
+        "input": msg,
+        "context": context
+    })
+    
+    # Get response from Featherless/Mistral model
+    try:
+        response = llm.invoke([
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Context: {context}\n\nQuestion: {msg}"}
+        ])
+        return response.content  # Extract the content from the AIMessage object
+    except Exception as e:
+        return f"Error generating response: {str(e)}"
 
-llm = HuggingFaceEndpoint(
-    endpoint_url="https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta",
-    huggingfacehub_api_token=os.getenv("HUGGINGFACEHUB_API_TOKEN"),
-    temperature=0.3,
-    max_new_tokens=300
-)
-
-
-
-
-prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", system_prompt),
-        ("human", "{input}"),
-    ]
-)
-
-question_answer_chain = create_stuff_documents_chain(llm, prompt)
-rag_chain = create_retrieval_chain(retriever, question_answer_chain)
 
 
 @app.route("/")
 def index():
     return render_template('chat.html')
 
-
-@app.route("/get", methods=["GET", "POST"])
+@app.route("/get", methods=["POST"])
 def chat():
-    msg = request.form["msg"]
-    input = msg
-    print(input)
-    response = rag_chain.invoke({"input": msg})
-    print("Response : ", response["answer"])
-    return str(response["answer"])
-
-
-
+    data = request.get_json()
+    msg = data.get("msg", "").strip()
+    
+    if not msg:
+        return jsonify({"error": "Empty message"}), 400
+        
+    response = process_query(msg)
+    return jsonify({"answer": response})
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port= 5000, debug= True)
+    app.run(host="0.0.0.0", port=5000)
